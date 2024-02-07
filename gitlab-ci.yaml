@@ -1,0 +1,26 @@
+before_script:
+  - EPOCH=$(perl -e "print time")
+
+deployment-development:
+    only:
+      - develop
+    tags:
+      - nodejs
+    script:
+      - docker build -t $REGISTRY:dev-$EPOCH .
+      - docker push $REGISTRY:dev-$EPOCH
+      - kubectl config use-context $K8S_CONFIG_DEV
+      - helm upgrade --set image.tag="dev-$EPOCH" $DEPLOY_DEV $HELM_PATH_DEV
+      - docker rmi $REGISTRY:dev-$EPOCH
+
+deployment-production:
+    only:
+      - master
+    tags:
+      - nodejs
+    script:
+      - docker build -t $REGISTRY:prod-$EPOCH .
+      - docker push $REGISTRY:prod-$EPOCH
+      - kubectl config use-context $K8S_CONFIG_PROD
+      - helm upgrade --set image.tag="prod-$EPOCH" $DEPLOY_PROD $HELM_PATH_PROD
+      - docker rmi $REGISTRY:prod-$EPOCH
